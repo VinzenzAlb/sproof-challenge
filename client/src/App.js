@@ -17,6 +17,7 @@ function App() {
   const [signatureComplete, setSignatureComplete] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const apiUrl = process.env.NODE_ENV == 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
 
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
@@ -24,7 +25,7 @@ function App() {
 
   const handleSignatureComplete = async (signatureData) => {
     try {
-      const response = await fetch('http://localhost:3001/api/sign', {
+      const response = await fetch(apiUrl + "sign", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +55,7 @@ function App() {
       <Box className="App" my={4}>
         <Typography variant="h4" gutterBottom>PDF Viewer and Signature</Typography>
         <Document
-          file="http://localhost:3001/api/pdf"
+          file={apiUrl + 'pdf'}
           onLoadSuccess={onDocumentLoadSuccess}
         >
           <Page pageNumber={pageNumber} width={600} />
