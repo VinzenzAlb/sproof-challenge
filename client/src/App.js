@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import SignatureWizard from './SignatureWizard';
-import { Button, Box, Typography, Container } from '@mui/material';
+import { Button, Box, Typography, Container, Snackbar } from '@mui/material';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -15,16 +15,38 @@ function App() {
   const [pageNumber, setPageNumber] = useState(1);
   const [showWizard, setShowWizard] = useState(false);
   const [signatureComplete, setSignatureComplete] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
   }
 
-  const handleSignatureComplete = (signatureData) => {
-    console.log('Signature completed:', signatureData);
-    setSignatureComplete(true);
-    setShowWizard(false);
-    // Here you would typically send the signature data to your server
+  const handleSignatureComplete = async (signatureData) => {
+    try {
+      const response = await fetch('http://localhost:3001/api/sign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(signatureData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSignatureComplete(true);
+        setShowWizard(false);
+        setSnackbarMessage(data.message);
+        setSnackbarOpen(true);
+      } else {
+        throw new Error(data.error || 'Failed to sign document');
+      }
+    } catch (error) {
+      console.error('Error signing document:', error);
+      setSnackbarMessage(error.message);
+      setSnackbarOpen(true);
+    }
   };
 
   return (
@@ -55,9 +77,9 @@ function App() {
           </Button>
         </Box>
         {!signatureComplete && (
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => setShowWizard(true)}
           >
             Sign Document
@@ -66,10 +88,16 @@ function App() {
         {signatureComplete && (
           <Typography color="success.main">Document signed successfully!</Typography>
         )}
-        <SignatureWizard 
-          open={showWizard} 
+        <SignatureWizard
+          open={showWizard}
           onClose={() => setShowWizard(false)}
-          onSignatureComplete={handleSignatureComplete} 
+          onSignatureComplete={handleSignatureComplete}
+        />
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarOpen(false)}
+          message={snackbarMessage}
         />
       </Box>
     </Container>
