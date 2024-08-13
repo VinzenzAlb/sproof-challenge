@@ -23,15 +23,14 @@ app.post('/api/sign', (req, res) => {
 
     console.log('Signing document...');
 
-    //hold the program for waitTime seconds
-    const start = Date.now();
-    const waitTime = 2; // in seconds
-    let now = start;
-    while (now - start < waitTime * 2000) {
-        now = Date.now();
-    }
-
-    console.log('done');
+    // //hold the program for waitTime seconds
+    // const start = Date.now();
+    // const waitTime = 2; // in seconds
+    // let now = start;
+    // while (now - start < waitTime * 2000) {
+    //     now = Date.now();
+    // }
+    // console.log('done');
 
     // Basic validation
     if (!name || !pin) {
