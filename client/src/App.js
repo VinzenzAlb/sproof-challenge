@@ -3,7 +3,10 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import SignatureWizard from './SignatureWizard';
-import { Button, Box, Typography, Container, Snackbar, Input, useMediaQuery, useTheme } from '@mui/material';
+import { Button, Box, Typography, Container, Snackbar, Input, useMediaQuery, useTheme, IconButton, Tooltip } from '@mui/material';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -18,26 +21,13 @@ function App() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [customPdfFile, setCustomPdfFile] = useState(null);
-  const [pdfWidth, setPdfWidth] = useState(600);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const containerRef = useRef(null);
 
   const apiUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
-
-  useEffect(() => {
-    const updatePdfWidth = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        setPdfWidth(Math.min(containerWidth - 32, 800));
-      }
-    };
-
-    updatePdfWidth();
-    window.addEventListener('resize', updatePdfWidth);
-    return () => window.removeEventListener('resize', updatePdfWidth);
-  }, []);
 
   const handleDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
@@ -80,6 +70,18 @@ function App() {
     }
   };
 
+  const handleZoomIn = () => {
+    setZoomLevel(prevZoom => Math.min(prevZoom + 0.1, 3));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prevZoom => Math.max(prevZoom - 0.1, 0.5));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+  };
+
   return (
     <Container maxWidth="md" ref={containerRef}>
       <Box className="App" my={4}>
@@ -94,6 +96,18 @@ function App() {
             Reset to Initial PDF
           </Button>
         </Box>
+        <Box mb={2} display="flex" justifyContent="center" alignItems="center">
+          <Tooltip title="Zoom Out">
+            <IconButton onClick={handleZoomOut}><ZoomOutIcon /></IconButton>
+          </Tooltip>
+          <Tooltip title="Reset Zoom">
+            <IconButton onClick={handleResetZoom}><RestartAltIcon /></IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom In">
+            <IconButton onClick={handleZoomIn}><ZoomInIcon /></IconButton>
+          </Tooltip>
+          <Typography ml={2}>Zoom: {(zoomLevel * 100).toFixed(0)}%</Typography>
+        </Box>
         <Box 
           display="flex" 
           flexDirection="column" 
@@ -101,14 +115,18 @@ function App() {
           mb={2}
           sx={{ 
             height: isMobile ? 'calc(100vh - 300px)' : 'calc(100vh - 250px)', 
-            overflowY: 'auto' 
+            overflowY: 'auto',
+            overflowX: 'auto'
           }}
         >
           <Document
             file={customPdfFile || `${apiUrl}pdf`}
             onLoadSuccess={handleDocumentLoadSuccess}
           >
-            <Page pageNumber={pageNumber} width={pdfWidth} />
+            <Page 
+              pageNumber={pageNumber} 
+              scale={zoomLevel}
+            />
           </Document>
         </Box>
         <Box my={2} display="flex" flexDirection={isMobile ? 'column' : 'row'} alignItems="center" justifyContent="space-between">
