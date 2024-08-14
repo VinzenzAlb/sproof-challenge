@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import SignatureWizard from './SignatureWizard';
-import { Button, Box, Typography, Container, Snackbar } from '@mui/material';
+import { Button, Box, Typography, Container, Snackbar, Input } from '@mui/material';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -17,10 +17,12 @@ function App() {
   const [signatureComplete, setSignatureComplete] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const apiUrl = process.env.NODE_ENV == 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
+  const [customPdfFile, setCustomPdfFile] = useState(null);
+  const apiUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
 
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
+    setPageNumber(1); // Reset to first page when a new document is loaded
   }
 
   const handleSignatureComplete = async (signatureData) => {
@@ -50,12 +52,38 @@ function App() {
     }
   };
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setCustomPdfFile(file);
+      setSignatureComplete(false); // Reset signature status for new document
+    } else {
+      setSnackbarMessage('Please select a valid PDF file.');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const resetToInitialPdf = () => {
+    setCustomPdfFile(null);
+    setSignatureComplete(false);
+  };
+
   return (
     <Container maxWidth="md">
       <Box className="App" my={4}>
         <Typography variant="h4" gutterBottom>PDF Viewer and Signature</Typography>
+        <Box mb={2}>
+          <Input
+            type="file"
+            onChange={handleFileChange}
+            inputProps={{ accept: 'application/pdf' }}
+          />
+          <Button onClick={resetToInitialPdf} disabled={!customPdfFile}>
+            Reset to Initial PDF
+          </Button>
+        </Box>
         <Document
-          file={apiUrl + 'pdf'}
+          file={customPdfFile || apiUrl + 'pdf'}
           onLoadSuccess={onDocumentLoadSuccess}
         >
           <Page pageNumber={pageNumber} width={600} />
