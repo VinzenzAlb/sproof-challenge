@@ -51,21 +51,23 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const checkServerStatus = async () => {
-      try {
-        const response = await fetch(`${apiUrl}status`, { method: 'GET' });
-        if (response.ok) {
-          setIsServerAwake(true);
-        } else {
-          throw new Error('Server is not responding');
-        }
-      } catch (error) {
-        console.log('Server is not awake yet:', error);
-        setIsServerAwake(false);
-      }
-    };
     checkServerStatus();
   }, [apiUrl]);
+
+
+  const checkServerStatus = async () => {
+    try {
+      const response = await fetch(`${apiUrl}status`, { method: 'GET' });
+      if (response.ok) {
+        setIsServerAwake(true);
+      } else {
+        throw new Error('Server is not responding');
+      }
+    } catch (error) {
+      console.log('Server is not awake yet:', error);
+      setIsServerAwake(false);
+    }
+  };
 
   const handleDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
@@ -73,6 +75,7 @@ function App() {
   };
 
   const handleSignatureComplete = async (signatureData) => {
+    await checkServerStatus();
     if (!isServerAwake) {
       setSnackbarMessage('The server is waking up. Please wait a moment and try again.');
       setSnackbarOpen(true);
