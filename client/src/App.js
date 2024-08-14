@@ -119,7 +119,7 @@ function App() {
 
   const LoadingMessage = () => (
     <Typography variant="body2" color="text.secondary">
-      Loading PDF... This may take a few minutes, as the server may be inactive and needs to wake up.
+      {isServerAwake ? 'Loading PDF...' : 'Loading PDF... This may take a few minutes, as the server may be inactive and needs to wake up.'}
     </Typography>
   );
 
