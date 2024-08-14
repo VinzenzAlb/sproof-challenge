@@ -19,17 +19,18 @@ function App() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [customPdfFile, setCustomPdfFile] = useState(null);
   const [pdfWidth, setPdfWidth] = useState(600);
-  const apiUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const containerRef = useRef(null);
 
+  const apiUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
+
   useEffect(() => {
     const updatePdfWidth = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
-        setPdfWidth(Math.min(containerWidth - 32, 800)); // 32px for padding, max width of 800px
+        setPdfWidth(Math.min(containerWidth - 32, 800));
       }
     };
 
@@ -38,18 +39,16 @@ function App() {
     return () => window.removeEventListener('resize', updatePdfWidth);
   }, []);
 
-  function onDocumentLoadSuccess({ numPages }) {
+  const handleDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPageNumber(1);
-  }
+  };
 
   const handleSignatureComplete = async (signatureData) => {
     try {
-      const response = await fetch(apiUrl + "sign", {
+      const response = await fetch(`${apiUrl}sign`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(signatureData),
       });
 
@@ -59,13 +58,13 @@ function App() {
         setSignatureComplete(true);
         setShowWizard(false);
         setSnackbarMessage(data.message);
-        setSnackbarOpen(true);
       } else {
         throw new Error(data.error || 'Failed to sign document');
       }
     } catch (error) {
       console.error('Error signing document:', error);
       setSnackbarMessage(error.message);
+    } finally {
       setSnackbarOpen(true);
     }
   };
@@ -81,11 +80,6 @@ function App() {
     }
   };
 
-  const resetToInitialPdf = () => {
-    setCustomPdfFile(null);
-    setSignatureComplete(false);
-  };
-
   return (
     <Container maxWidth="md" ref={containerRef}>
       <Box className="App" my={4}>
@@ -96,7 +90,7 @@ function App() {
             onChange={handleFileChange}
             inputProps={{ accept: 'application/pdf' }}
           />
-          <Button onClick={resetToInitialPdf} disabled={!customPdfFile} variant="outlined">
+          <Button onClick={() => setCustomPdfFile(null)} disabled={!customPdfFile} variant="outlined">
             Reset to Initial PDF
           </Button>
         </Box>
@@ -111,8 +105,8 @@ function App() {
           }}
         >
           <Document
-            file={customPdfFile || apiUrl + 'pdf'}
-            onLoadSuccess={onDocumentLoadSuccess}
+            file={customPdfFile || `${apiUrl}pdf`}
+            onLoadSuccess={handleDocumentLoadSuccess}
           >
             <Page pageNumber={pageNumber} width={pdfWidth} />
           </Document>
@@ -124,31 +118,27 @@ function App() {
           <Box>
             <Button
               disabled={pageNumber <= 1}
-              onClick={() => setPageNumber(pageNumber - 1)}
+              onClick={() => setPageNumber(prev => prev - 1)}
             >
               Previous
             </Button>
             <Button
               disabled={pageNumber >= numPages}
-              onClick={() => setPageNumber(pageNumber + 1)}
+              onClick={() => setPageNumber(prev => prev + 1)}
             >
               Next
             </Button>
           </Box>
         </Box>
-        {!signatureComplete && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setShowWizard(true)}
-            fullWidth={isMobile}
-          >
-            Sign Document
-          </Button>
-        )}
-        {signatureComplete && (
-          <Typography color="success.main">Document signed successfully!</Typography>
-        )}
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setShowWizard(true)}
+          fullWidth={isMobile}
+          disabled={signatureComplete}
+        >
+          {signatureComplete ? 'Document Signed' : 'Sign Document'}
+        </Button>
         <SignatureWizard
           open={showWizard}
           onClose={() => setShowWizard(false)}
