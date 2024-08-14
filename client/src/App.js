@@ -122,7 +122,7 @@ function App() {
           </Typography>
         </Box>
         <Button onClick={() => setCustomPdfFile(null)} disabled={!customPdfFile} variant="outlined" size="small">
-          Reset to Initial PDF
+          Reset to Example PDF
         </Button>
       </Box>
       <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
