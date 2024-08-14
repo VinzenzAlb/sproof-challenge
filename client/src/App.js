@@ -97,7 +97,12 @@ function App() {
   return (
     <Container maxWidth="lg" ref={containerRef} sx={{ height: '100vh', display: 'flex', flexDirection: 'column', py: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom>PDF Viewer and Signature</Typography>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center" mb={2}
+        flexWrap={{ xs: 'wrap', md: 'nowrap' }}
+      >
         <Box display="flex" alignItems="center" gap={2}>
           <Button
             variant="contained"
@@ -125,20 +130,19 @@ function App() {
         <Tooltip title="Fit to Width"><IconButton onClick={handleFitToWidth}><FitScreenIcon /></IconButton></Tooltip>
         <Tooltip title="Zoom In"><IconButton onClick={handleZoomIn}><ZoomInIcon /></IconButton></Tooltip>
       </Box>
-      <Box 
+      <Box
         ref={pdfContainerRef}
         flexGrow={1}
-        display="flex" 
-        flexDirection="column" 
-        alignItems="center" 
-        sx={{ overflowY: 'auto', overflowX: 'auto', mb: 2 }}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
       >
         <Document
           file={customPdfFile || `${apiUrl}pdf`}
           onLoadSuccess={handleDocumentLoadSuccess}
         >
-          <Page 
-            pageNumber={pageNumber} 
+          <Page
+            pageNumber={pageNumber}
             width={pdfDimensions.width * zoomLevel}
             height={pdfDimensions.height * zoomLevel}
           />
@@ -158,7 +162,7 @@ function App() {
           variant="contained"
           color="primary"
           onClick={() => setShowWizard(true)}
-          sx={{ 
+          sx={{
             width: isMobile ? '100%' : 'auto',
             minWidth: isMobile ? 'auto' : '200px'
           }}
