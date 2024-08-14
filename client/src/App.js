@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import SignatureWizard from './SignatureWizard';
-import { Button, Box, Typography, Container, Snackbar, Input, IconButton, Tooltip } from '@mui/material';
+import { Button, Box, Typography, Container, Snackbar, Input, IconButton, Tooltip, useTheme, useMediaQuery } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
@@ -27,6 +27,9 @@ function App() {
   const containerRef = useRef(null);
   const pdfContainerRef = useRef(null);
   const apiUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     const updatePdfDimensions = () => {
@@ -142,15 +145,20 @@ function App() {
             <Button disabled={pageNumber >= numPages} onClick={() => setPageNumber(prev => prev + 1)}>Next</Button>
           </Box>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setShowWizard(true)}
-          fullWidth
-          disabled={signatureComplete}
-        >
-          {signatureComplete ? 'Document Signed' : 'Sign Document'}
-        </Button>
+        <Box display="flex" justifyContent="center">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setShowWizard(true)}
+            sx={{ 
+              width: isMobile ? '100%' : 'auto',
+              minWidth: isMobile ? 'auto' : '200px'
+            }}
+            disabled={signatureComplete}
+          >
+            {signatureComplete ? 'Document Signed' : 'Sign Document'}
+          </Button>
+        </Box>
         <SignatureWizard
           open={showWizard}
           onClose={() => setShowWizard(false)}
