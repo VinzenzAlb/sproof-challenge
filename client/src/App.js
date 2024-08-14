@@ -3,10 +3,10 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import SignatureWizard from './SignatureWizard';
-import { Button, Box, Typography, Container, Snackbar, Input, useMediaQuery, useTheme, IconButton, Tooltip } from '@mui/material';
+import { Button, Box, Typography, Container, Snackbar, Input, IconButton, Tooltip } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import FitScreenIcon from '@mui/icons-material/FitScreen';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -22,12 +22,29 @@ function App() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [customPdfFile, setCustomPdfFile] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const containerRef = useRef(null);
-
+  const pdfContainerRef = useRef(null);
   const apiUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3001/api/' : 'https://sproof-challenge.onrender.com/api/';
+
+  useEffect(() => {
+    const updatePdfDimensions = () => {
+      if (containerRef.current && pdfContainerRef.current) {
+        const containerHeight = containerRef.current.clientHeight;
+        const pdfContainerHeight = pdfContainerRef.current.clientHeight;
+        const aspectRatio = 1 / Math.sqrt(2); // Approximate aspect ratio of an A4 page
+        const maxWidth = pdfContainerHeight * aspectRatio;
+        const width = Math.min(pdfContainerRef.current.clientWidth - 32, maxWidth);
+        const height = width / aspectRatio;
+        setPdfDimensions({ width, height });
+      }
+    };
+
+    updatePdfDimensions();
+    window.addEventListener('resize', updatePdfDimensions);
+    return () => window.removeEventListener('resize', updatePdfDimensions);
+  }, []);
 
   const handleDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
@@ -70,23 +87,15 @@ function App() {
     }
   };
 
-  const handleZoomIn = () => {
-    setZoomLevel(prevZoom => Math.min(prevZoom + 0.1, 3));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prevZoom => Math.max(prevZoom - 0.1, 0.5));
-  };
-
-  const handleResetZoom = () => {
-    setZoomLevel(1);
-  };
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 3));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+  const handleFitToWidth = () => setZoomLevel(1);
 
   return (
-    <Container maxWidth="md" ref={containerRef}>
-      <Box className="App" my={4}>
+    <Container maxWidth="md" ref={containerRef} sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box className="App" my={2} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h4" gutterBottom>PDF Viewer and Signature</Typography>
-        <Box mb={2} display="flex" flexDirection={isMobile ? 'column' : 'row'} alignItems="center" gap={1}>
+        <Box mb={2} display="flex" flexDirection="row" alignItems="center" gap={1} flexWrap="wrap">
           <Input
             type="file"
             onChange={handleFileChange}
@@ -97,24 +106,18 @@ function App() {
           </Button>
         </Box>
         <Box mb={2} display="flex" justifyContent="center" alignItems="center">
-          <Tooltip title="Zoom Out">
-            <IconButton onClick={handleZoomOut}><ZoomOutIcon /></IconButton>
-          </Tooltip>
-          <Tooltip title="Reset Zoom">
-            <IconButton onClick={handleResetZoom}><RestartAltIcon /></IconButton>
-          </Tooltip>
-          <Tooltip title="Zoom In">
-            <IconButton onClick={handleZoomIn}><ZoomInIcon /></IconButton>
-          </Tooltip>
-          <Typography ml={2}>Zoom: {(zoomLevel * 100).toFixed(0)}%</Typography>
+          <Tooltip title="Zoom Out"><IconButton onClick={handleZoomOut}><ZoomOutIcon /></IconButton></Tooltip>
+          <Tooltip title="Fit to Width"><IconButton onClick={handleFitToWidth}><FitScreenIcon /></IconButton></Tooltip>
+          <Tooltip title="Zoom In"><IconButton onClick={handleZoomIn}><ZoomInIcon /></IconButton></Tooltip>
         </Box>
         <Box 
+          ref={pdfContainerRef}
+          flexGrow={1}
           display="flex" 
           flexDirection="column" 
           alignItems="center" 
           mb={2}
           sx={{ 
-            height: isMobile ? 'calc(100vh - 300px)' : 'calc(100vh - 250px)', 
             overflowY: 'auto',
             overflowX: 'auto'
           }}
@@ -125,34 +128,25 @@ function App() {
           >
             <Page 
               pageNumber={pageNumber} 
-              scale={zoomLevel}
+              width={pdfDimensions.width * zoomLevel}
+              height={pdfDimensions.height * zoomLevel}
             />
           </Document>
         </Box>
-        <Box my={2} display="flex" flexDirection={isMobile ? 'column' : 'row'} alignItems="center" justifyContent="space-between">
+        <Box my={2} display="flex" flexDirection="row" alignItems="center" justifyContent="space-between" flexWrap="wrap">
           <Typography>
             Page {pageNumber} of {numPages}
           </Typography>
           <Box>
-            <Button
-              disabled={pageNumber <= 1}
-              onClick={() => setPageNumber(prev => prev - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              disabled={pageNumber >= numPages}
-              onClick={() => setPageNumber(prev => prev + 1)}
-            >
-              Next
-            </Button>
+            <Button disabled={pageNumber <= 1} onClick={() => setPageNumber(prev => prev - 1)}>Previous</Button>
+            <Button disabled={pageNumber >= numPages} onClick={() => setPageNumber(prev => prev + 1)}>Next</Button>
           </Box>
         </Box>
         <Button
           variant="contained"
           color="primary"
           onClick={() => setShowWizard(true)}
-          fullWidth={isMobile}
+          fullWidth
           disabled={signatureComplete}
         >
           {signatureComplete ? 'Document Signed' : 'Sign Document'}
