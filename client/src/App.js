@@ -127,7 +127,7 @@ function App() {
       </Box>
       <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
         <Tooltip title="Zoom Out"><IconButton onClick={handleZoomOut}><ZoomOutIcon /></IconButton></Tooltip>
-        <Tooltip title="Fit to Width"><IconButton onClick={handleFitToWidth}><FitScreenIcon /></IconButton></Tooltip>
+        <Tooltip title="Auto Fit"><IconButton onClick={handleFitToWidth}><FitScreenIcon /></IconButton></Tooltip>
         <Tooltip title="Zoom In"><IconButton onClick={handleZoomIn}><ZoomInIcon /></IconButton></Tooltip>
       </Box>
       <Box
