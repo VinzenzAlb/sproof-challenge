@@ -23,6 +23,7 @@ function App() {
   const [customPdfFile, setCustomPdfFile] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
+  const [isServerAwake, setIsServerAwake] = useState(false);
 
   const containerRef = useRef(null);
   const pdfContainerRef = useRef(null);
@@ -49,12 +50,34 @@ function App() {
     return () => window.removeEventListener('resize', updatePdfDimensions);
   }, []);
 
+  useEffect(() => {
+    const checkServerStatus = async () => {
+      try {
+        const response = await fetch(`${apiUrl}status`, { method: 'GET' });
+        if (response.ok) {
+          setIsServerAwake(true);
+        } else {
+          throw new Error('Server is not responding');
+        }
+      } catch (error) {
+        console.log('Server is not awake yet:', error);
+        setIsServerAwake(false);
+      }
+    };
+    checkServerStatus();
+  }, [apiUrl]);
+
   const handleDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPageNumber(1);
   };
 
   const handleSignatureComplete = async (signatureData) => {
+    if (!isServerAwake) {
+      setSnackbarMessage('The server is waking up. Please wait a moment and try again.');
+      setSnackbarOpen(true);
+      return;
+    }
     try {
       const response = await fetch(`${apiUrl}sign`, {
         method: 'POST',
@@ -93,6 +116,12 @@ function App() {
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 3));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
   const handleFitToWidth = () => setZoomLevel(1);
+
+  const LoadingMessage = () => (
+    <Typography variant="body2" color="text.secondary">
+      Loading PDF... This may take a few minutes, as the server may be inactive and needs to wake up.
+    </Typography>
+  );
 
   return (
     <Container maxWidth="lg" ref={containerRef} sx={{ height: '100vh', display: 'flex', flexDirection: 'column', py: 3 }}>
@@ -140,6 +169,7 @@ function App() {
         <Document
           file={customPdfFile || `${apiUrl}pdf`}
           onLoadSuccess={handleDocumentLoadSuccess}
+          loading={<LoadingMessage />}
         >
           <Page
             pageNumber={pageNumber}

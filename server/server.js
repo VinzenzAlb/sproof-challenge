@@ -32,3 +32,7 @@ app.post('/api/sign', (req, res) => {
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
+
+app.get('/api/status', (req, res) => {
+    res.sendStatus(200);
+});
