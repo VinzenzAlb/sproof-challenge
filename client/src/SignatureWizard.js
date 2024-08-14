@@ -4,9 +4,7 @@ import {
     Typography, Box, Paper, Modal
 } from '@mui/material';
 
-// Constants
 const STEPS = ['Enter Name', 'Enter PIN', 'Review'];
-const CORRECT_PIN = '1337';
 
 const SignatureWizard = ({ open, onClose, onSignatureComplete }) => {
     const [activeStep, setActiveStep] = useState(0);
@@ -21,25 +19,15 @@ const SignatureWizard = ({ open, onClose, onSignatureComplete }) => {
             setError('Please enter your name');
             return;
         }
-        if (activeStep === 1) {
-            if (!pin) {
-                setError('Please enter the PIN');
-                return;
-            }
-            //   if (pin !== CORRECT_PIN) {
-            //     setError('Incorrect PIN');
-            //     return;
-            //   }
+        if (activeStep === 1 && !pin) {
+            setError('Please enter the PIN');
+            return;
         }
         if (activeStep === STEPS.length - 1) {
             onSignatureComplete({ name, pin });
         } else {
             setActiveStep((prevActiveStep) => prevActiveStep + 1);
         }
-    };
-
-    const handleBack = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };
 
     const getStepContent = (step) => {
@@ -107,7 +95,7 @@ const SignatureWizard = ({ open, onClose, onSignatureComplete }) => {
                         <Button
                             type="button"
                             disabled={activeStep === 0}
-                            onClick={handleBack}
+                            onClick={() => setActiveStep((prev) => prev - 1)}
                         >
                             Back
                         </Button>
