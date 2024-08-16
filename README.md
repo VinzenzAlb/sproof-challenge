@@ -4,7 +4,7 @@ This project is a developer challenge for an internship application at Sproof, c
 
 ## Overview
 
-A React application with a Node.js backend that demonstrates PDF viewing and simulates document signing. The signing process is pseudo-implemented for demonstration purposes.
+A React application with a Node.js backend that demonstrates PDF viewing and simulates document signing. The signing process is pseudo-implemented for demonstration purposes. Currently deployed at [https://sproof-challenge.vercel.app/](https://sproof-challenge.vercel.app/)
 
 ## Key Features
 
