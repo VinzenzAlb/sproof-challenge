@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3001;
-const validPin = '1337';
+const validPin = process.env.VALID_PIN || '1337';
 
 app.use(cors());
 app.use(express.json());
