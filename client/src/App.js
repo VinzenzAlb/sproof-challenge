@@ -52,8 +52,8 @@ function App() {
 
   useEffect(() => {
     checkServerStatus();
+    document.title = "Sproof Challenge";
   }, [apiUrl]);
-
 
   const checkServerStatus = async () => {
     try {
@@ -72,10 +72,11 @@ function App() {
   const handleDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPageNumber(1);
+    checkServerStatus();
   };
 
   const handleSignatureComplete = async (signatureData) => {
-    await checkServerStatus();
+    checkServerStatus();
     if (!isServerAwake) {
       setSnackbarMessage('The server is waking up. Please wait a moment and try again.');
       setSnackbarOpen(true);
