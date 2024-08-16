@@ -14,12 +14,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 function App() {
-  const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [pageInfo, setPageInfo] = useState({ pageNumber: 1, numPages: null });
   const [showWizard, setShowWizard] = useState(false);
   const [signatureComplete, setSignatureComplete] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
   const [customPdfFile, setCustomPdfFile] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
@@ -35,7 +33,6 @@ function App() {
   useEffect(() => {
     const updatePdfDimensions = () => {
       if (containerRef.current && pdfContainerRef.current) {
-        const containerHeight = containerRef.current.clientHeight;
         const pdfContainerHeight = pdfContainerRef.current.clientHeight;
         const aspectRatio = 1 / Math.sqrt(2);
         const maxWidth = pdfContainerHeight * aspectRatio;
@@ -53,7 +50,7 @@ function App() {
   useEffect(() => {
     checkServerStatus();
     document.title = "Sproof Challenge";
-  }, [apiUrl]);
+  }, []);
 
   const checkServerStatus = async () => {
     try {
@@ -70,16 +67,28 @@ function App() {
   };
 
   const handleDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-    setPageNumber(1);
+    setPageInfo({ pageNumber: 1, numPages });
     checkServerStatus();
+  };
+
+  const goToPreviousPage = () => {
+    setPageInfo(prev => ({
+      ...prev,
+      pageNumber: Math.max(prev.pageNumber - 1, 1)
+    }));
+  };
+  
+  const goToNextPage = () => {
+    setPageInfo(prev => ({
+      ...prev,
+      pageNumber: Math.min(prev.pageNumber + 1, prev.numPages)
+    }));
   };
 
   const handleSignatureComplete = async (signatureData) => {
     checkServerStatus();
     if (!isServerAwake) {
-      setSnackbarMessage('The server is waking up. Please wait a moment and try again.');
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: 'The server is waking up. Please wait a moment and try again.' });
       return;
     }
     try {
@@ -94,15 +103,13 @@ function App() {
       if (response.ok) {
         setSignatureComplete(true);
         setShowWizard(false);
-        setSnackbarMessage(data.message);
+        setSnackbar({ open: true, message: data.message });
       } else {
         throw new Error(data.error || 'Failed to sign document');
       }
     } catch (error) {
       console.error('Error signing document:', error);
-      setSnackbarMessage(error.message);
-    } finally {
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: error.message });
     }
   };
 
@@ -112,8 +119,7 @@ function App() {
       setCustomPdfFile(file);
       setSignatureComplete(false);
     } else {
-      setSnackbarMessage('Please select a valid PDF file.');
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: 'Please select a valid PDF file.' });
     }
   };
 
@@ -176,7 +182,7 @@ function App() {
           loading={<LoadingMessage />}
         >
           <Page
-            pageNumber={pageNumber}
+            pageNumber={pageInfo.pageNumber}
             width={pdfDimensions.width * zoomLevel}
             height={pdfDimensions.height * zoomLevel}
           />
@@ -184,11 +190,11 @@ function App() {
       </Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="body2">
-          Page {pageNumber} of {numPages}
+          Page {pageInfo.pageNumber} of {pageInfo.numPages}
         </Typography>
         <Box>
-          <Button size="small" disabled={pageNumber <= 1} onClick={() => setPageNumber(prev => prev - 1)}>Previous</Button>
-          <Button size="small" disabled={pageNumber >= numPages} onClick={() => setPageNumber(prev => prev + 1)}>Next</Button>
+          <Button size="small" disabled={pageInfo.pageNumber <= 1} onClick={goToPreviousPage}>Previous</Button>
+          <Button size="small" disabled={pageInfo.pageNumber >= pageInfo.numPages} onClick={goToNextPage}>Next</Button>
         </Box>
       </Box>
       <Box display="flex" justifyContent="flex-start">
@@ -211,10 +217,10 @@ function App() {
         onSignatureComplete={handleSignatureComplete}
       />
       <Snackbar
-        open={snackbarOpen}
+        open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
       />
     </Container>
   );
